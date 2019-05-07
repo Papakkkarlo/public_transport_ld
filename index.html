@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>SPB Public Transport</title>
+		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css"
+   		integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA==" crossorigin=""/>
+   		 <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"
+		   integrity="sha512-QVftwZFqvtRNi0ZyCtsznlKSWOStnDORoefr1enyq5mVL4tmKB3S/EnC3rRJcxCPavG10IcrVGSmPh6Qw5lwrg==" crossorigin=""></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.0/jquery.min.js"></script>
+	<style>
+		#manu {position: absolute; top:0; }
+		#map { height: 800px; position:absolute; left: 110px; top:0; bottom:0; width:100%; }
+		.type {filter: invert(0.3)}
+	</style>
+</head>
+<body>
+	<div id="menu"></div>
+	<div id="map"></div>
+<script>
+	var types = ['tram', 'bus', 'trolleybus', 'marshrutka']
+
+	var api = 'http://127.0.0.1:5000/'//'https://flask-public-transport-api.herokuapp.com/'
+	var api_routs = 'http://127.0.0.1:5000/routs/'
+	var api_stops = 'http://127.0.0.1:5000/stops'//'https://flask-public-transport-api.herokuapp.com/stops'
+	var api_busses = 'http://127.0.0.1:5000/busses/'//'https://flask-public-transport-api.herokuapp.com/busses/'
+
+	var lat = 59.957;
+	var lon = 30.293;
+	var zoom = 10;
+
+	var point_zoom = 15;
+
+	var clicked_rout = null;
+	var rout_style = {
+			    "color": "#00FFFF",
+			    "weight": 2,
+			};
+	var clicked_rout_style = {
+				"color": '#FF0000',
+			    "weight": 10
+			};
+
+	var clicked_stop = null;
+	var stop_style = {
+				"color": "#0000FF",
+				"radius": 5,
+				"opacity": 1,
+    			"fillOpacity": 1,
+	};
+	var clicked_stop_style = {
+				"color": "#FFFF00",
+				"radius": 10,
+	};
+
+	var mapboxAccessToken = 'pk.eyJ1IjoiZWdvcmthMjIyIiwiYSI6ImNqOXI2NGFraDVvbWEzM3F5cDNrOWZkaGwifQ.FLMyc-rpTTnNdzsoPhu8CA'
+	var style = 'mapbox://styles/egorka222/cje6xk904gs3d2smowew7vzen'
+
+	var map = L.map('map').setView([lat, lon], zoom);
+	
+	L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
+	    id: 'mapbox.dark',
+	    accessToken: mapboxAccessToken,
+	}).addTo(map);
+
+	var stopsLayerGroup;
+
+	function busses(data){
+			clicked_stop._popup.setContent('<strong>'+data.name+'</strong><br>'+data.busses.join('<br>'))
+			console.log()
+			map.setView([clicked_stop._latlng.lat, clicked_stop._latlng.lng], point_zoom);
+	}
+
+	function addStops(data){
+		L.geoJson(data, {
+			pointToLayer: function (feature, latlng) {				
+		        return L.circleMarker(latlng, stop_style).bindPopup('<strong>No data</strong>').addTo(stopsLayerGroup);
+		    },
+			//style: stop_style,
+			onEachFeature: function(feature, layer){
+				layer.on({
+					click: function(e){
+						var stop_name = e.target.feature.properties.name
+						console.log(stop_name)
+						if(clicked_stop != null){
+							clicked_stop.setStyle(stop_style);
+						}
+						clicked_stop = e.target
+						clicked_stop.setStyle(clicked_stop_style) 
+						getData(api_busses + stop_name)
+					}
+				})
+			}
+		}).addTo(map);
+	}
+
+    function addRouts(data){
+		L.geoJson(data, {
+			style: rout_style,
+			onEachFeature: function(feature, layer){
+				layer.on({
+					click: function(e){
+						var rout_name = e.target.feature.properties.name
+						console.log(rout_name)
+						stopsLayerGroup.clearLayers();
+						if(clicked_rout != null){
+							clicked_rout.setStyle(rout_style);
+						}
+						
+						clicked_rout = e.target
+						clicked_rout.setStyle(clicked_rout_style) 
+						getData(api_stops + rout_name)
+					}
+				})
+			}
+		}).addTo(map);
+    }
+
+    function rout(data){
+    	if(data.type === 'FeatureCollection'){
+			if(data['features'][0]['geometry']['type'] === 'LineString'){
+	    		addRouts(data)
+	    	}else{
+	    		addStops(data)
+	    	}
+    	}
+    	else{
+    		busses(data)
+    	}
+    }
+
+    function getData (url){
+	    	$.ajax({
+			url: url,
+			crossDomain: true,
+			async: false,
+			dataType: 'json',
+			success: function(data) {
+				console.log(data)
+			  	rout(data)
+			}			
+		})
+    }
+
+    for (var i=0;i<types.length;i++){
+		$('#menu').append('<br><br><br><br><img src="icon/'+types[i]+'.png" id="'+types[i]+'" width="100" height="100"><br>')
+    }
+	$('#menu').click(function(e){
+		map.eachLayer(function (layer) {
+			if(Object.keys(layer.options).length < 1){
+				map.removeLayer(layer);
+			}
+		});
+		stopsLayerGroup = L.layerGroup().addTo(map)
+		$('img').removeClass('type')
+		$(e.target).addClass('type')
+		getData(api_routs + e.target.id)
+	})
+	
+</script>
+</body>
+</html>
