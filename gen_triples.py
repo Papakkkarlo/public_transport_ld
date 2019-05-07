@@ -47,7 +47,7 @@ json_file = open('data/public_transport_routs.geojson')
 routs = json.load(json_file)['features']
 json_file.close()
 
-for r in routs[:100]:
+for r in routs:
 	rout = PT[r['properties']['href']]
 	g.add( (rout, RDF.type, PT.rout) )
 	g.add( (rout, PT.direction, Literal(r['properties']['direction'])) )
@@ -56,18 +56,5 @@ for r in routs[:100]:
 	g.add( (rout, PT.name, Literal(r['properties']['href'])) )
 	g.add( (rout, GEORSS.line, Literal(' '.join(['-'.join([str(n) for n in l]) for l in r['geometry']['coordinates']]))) )
 
-type = 'trolleybus'
-res = g.query(
-			"""SELECT ?name ?line
-			   WHERE {
-					?rout pt:type  ?type.
-					?rout pt:name ?name .
-					?rout georss:line ?line .
-			   }""",
-			   initNs = { "rdf": RDF, "pt": PT, "georss": GEORSS },
-			   initBindings={'rout': PT[type]}
-			)
-		
-for row in res:
-	print(row[0], row[1])
-#g.serialize('data/public_transport_KB', format='turtle')
+
+g.serialize('data/public_transport_KB', format='turtle')
