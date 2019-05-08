@@ -20,10 +20,9 @@
 <script>
 	var types = ['tram', 'bus', 'trolleybus', 'marshrutka']
 
-	var api = 'http://127.0.0.1:5000/'//'https://flask-public-transport-api.herokuapp.com/'
-	var api_routs = 'http://127.0.0.1:5000/routs/'
-	var api_stops = 'http://127.0.0.1:5000/stops'//'https://flask-public-transport-api.herokuapp.com/stops'
-	var api_busses = 'http://127.0.0.1:5000/busses/'//'https://flask-public-transport-api.herokuapp.com/busses/'
+	var api_routs = 'https://flask-public-transport-api.herokuapp.com/routs/'//'http://127.0.0.1:5000/routs/'
+	var api_stops = 'https://flask-public-transport-api.herokuapp.com/stops'//'http://127.0.0.1:5000/stops'//'https://flask-public-transport-api.herokuapp.com/stops'
+	var api_busses = 'https://flask-public-transport-api.herokuapp.com/busses/'//'http://127.0.0.1:5000/busses/'//'https://flask-public-transport-api.herokuapp.com/busses/'
 
 	var lat = 59.957;
 	var lon = 30.293;
@@ -154,6 +153,7 @@
 		stopsLayerGroup = L.layerGroup().addTo(map)
 		$('img').removeClass('type')
 		$(e.target).addClass('type')
+		map.setView([lat, lon], zoom);
 		getData(api_routs + e.target.id)
 	})
 	
