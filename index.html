@@ -5,13 +5,15 @@
 	<title>SPB Public Transport</title>
 		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css"
    		integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA==" crossorigin=""/>
-   		 <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"
-		   integrity="sha512-QVftwZFqvtRNi0ZyCtsznlKSWOStnDORoefr1enyq5mVL4tmKB3S/EnC3rRJcxCPavG10IcrVGSmPh6Qw5lwrg==" crossorigin=""></script>
+   		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+   		<script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"
+		integrity="sha512-QVftwZFqvtRNi0ZyCtsznlKSWOStnDORoefr1enyq5mVL4tmKB3S/EnC3rRJcxCPavG10IcrVGSmPh6Qw5lwrg==" crossorigin=""></script>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.0/jquery.min.js"></script>
 	<style>
 		#manu {position: absolute; top:0; }
 		#map { height: 800px; position:absolute; left: 110px; top:0; bottom:0; width:100%; }
 		.type {filter: invert(0.3)}
+		#rout_name{ position: absolute; left: 800px;top: 0px; padding: 10px; border-radius: 12px; background: white; z-index: 100000;}
 	</style>
 </head>
 <body>
@@ -20,10 +22,13 @@
 <script>
 	var types = ['tram', 'bus', 'trolleybus', 'marshrutka']
 
-	var api_routs = 'https://flask-public-transport-api.herokuapp.com/routs/'//'http://127.0.0.1:5000/routs/'
-	var api_stops = 'https://flask-public-transport-api.herokuapp.com/stops'//'http://127.0.0.1:5000/stops'//'https://flask-public-transport-api.herokuapp.com/stops'
-	var api_busses = 'https://flask-public-transport-api.herokuapp.com/busses/'//'http://127.0.0.1:5000/busses/'//'https://flask-public-transport-api.herokuapp.com/busses/'
+	var api = 'https://flask-public-transport-api.herokuapp.com'
+	//var api = 'http://127.0.0.1:5000'
 
+	var api_routs = api+'/routs/'
+	var api_stops = api+'/stops'
+	var api_busses = api+'/busses/'
+	
 	var lat = 59.957;
 	var lon = 30.293;
 	var zoom = 10;
@@ -33,11 +38,11 @@
 	var clicked_rout = null;
 	var rout_style = {
 			    "color": "#00FFFF",
-			    "weight": 2,
+			    "weight": 3,
 			};
 	var clicked_rout_style = {
-				"color": '#FF0000',
-			    "weight": 10
+				"color": '#FF7F50',
+			    "weight": 5,
 			};
 
 	var clicked_stop = null;
@@ -66,7 +71,6 @@
 
 	function busses(data){
 			clicked_stop._popup.setContent('<strong>'+data.name+'</strong><br>'+data.busses.join('<br>'))
-			console.log()
 			map.setView([clicked_stop._latlng.lat, clicked_stop._latlng.lng], point_zoom);
 	}
 
@@ -80,7 +84,6 @@
 				layer.on({
 					click: function(e){
 						var stop_name = e.target.feature.properties.name
-						console.log(stop_name)
 						if(clicked_stop != null){
 							clicked_stop.setStyle(stop_style);
 						}
@@ -98,16 +101,23 @@
 			style: rout_style,
 			onEachFeature: function(feature, layer){
 				layer.on({
+					mouseover: function(e){
+						var el = $('<div id="rout_name">'+e.target.feature.properties.name.split("/").join(" ")+'</div>')
+						$('body').append(el)
+					},
+					mouseout: function(e){
+						$('#rout_name').remove()
+					},
 					click: function(e){
+						$('#rout_name').remove()
 						var rout_name = e.target.feature.properties.name
-						console.log(rout_name)
 						stopsLayerGroup.clearLayers();
 						if(clicked_rout != null){
 							clicked_rout.setStyle(rout_style);
 						}
-						
-						clicked_rout = e.target
-						clicked_rout.setStyle(clicked_rout_style) 
+						json = e.target.feature;
+						map.removeLayer(e.target)
+						clicked_rout = L.geoJSON(json, {style: clicked_rout_style}).addTo(map);
 						getData(api_stops + rout_name)
 					}
 				})
@@ -135,7 +145,6 @@
 			async: false,
 			dataType: 'json',
 			success: function(data) {
-				console.log(data)
 			  	rout(data)
 			}			
 		})
