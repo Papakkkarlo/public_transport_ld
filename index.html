@@ -22,8 +22,8 @@
 <script>
 	var types = ['tram', 'bus', 'trolleybus', 'marshrutka']
 
-	var api = 'https://flask-public-transport-api.herokuapp.com'
-	//var api = 'http://127.0.0.1:5000'
+	//var api = 'https://flask-public-transport-api.herokuapp.com'
+	var api = 'http://127.0.0.1:5000'
 
 	var api_routs = api+'/routs/'
 	var api_stops = api+'/stops'
@@ -37,23 +37,23 @@
 
 	var clicked_rout = null;
 	var rout_style = {
-			    "color": "#00FFFF",
+			    "color": "#8FCEE9",
 			    "weight": 3,
 			};
 	var clicked_rout_style = {
-				"color": '#FF7F50',
+				"color": '#3013EC',
 			    "weight": 5,
 			};
 
 	var clicked_stop = null;
 	var stop_style = {
-				"color": "#0000FF",
+				"color": "#3013EC",
 				"radius": 5,
 				"opacity": 1,
     			"fillOpacity": 1,
 	};
 	var clicked_stop_style = {
-				"color": "#FFFF00",
+				"color": "#FB1313",
 				"radius": 10,
 	};
 
@@ -63,7 +63,7 @@
 	var map = L.map('map').setView([lat, lon], zoom);
 	
 	L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
-	    id: 'mapbox.dark',
+	    id: 'mapbox.light',
 	    accessToken: mapboxAccessToken,
 	}).addTo(map);
 
